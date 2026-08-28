@@ -1,0 +1,50 @@
+name: Sync final v22 portfolio
+
+on:
+  push:
+    paths:
+      - '.github/workflows/sync-v22.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Download exact final v22 deployment
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f cookies.txt index.new.html
+          curl --fail --silent --show-error --location \
+            --cookie-jar cookies.txt --cookie cookies.txt \
+            'https://zainhing-ms43gf7py-zains-projects-0de7bb63.vercel.app/?_vercel_share=626ZDHdw01rcukZ5oXkPd1LhHQu8Xgqw' \
+            --output index.new.html
+          test -s index.new.html
+          grep -q 'Zain Hing | Mechanical Engineering Portfolio' index.new.html
+          grep -q 'Mechanical Engineering @ McMaster University' index.new.html
+          mv index.new.html index.html
+          rm -f cookies.txt
+
+      - name: Commit final portfolio to main
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/sync-v22.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html .github/workflows/sync-v22.yml
+          if git diff --cached --quiet; then
+            echo 'No changes to commit.'
+            exit 0
+          fi
+          git commit -m 'Deploy final v22 portfolio'
+          git push origin HEAD:main
