@@ -19,32 +19,34 @@ jobs:
           ref: main
           fetch-depth: 0
 
-      - name: Download exact final v22 deployment
+      - name: Diagnose Vercel share access
         shell: bash
         run: |
-          set -euo pipefail
+          set -u
           rm -f cookies.txt index.new.html
-          curl --fail --silent --show-error --location \
+          curl --verbose --location \
             --cookie-jar cookies.txt --cookie cookies.txt \
-            'https://zainhing-ms43gf7py-zains-projects-0de7bb63.vercel.app/?_vercel_share=626ZDHdw01rcukZ5oXkPd1LhHQu8Xgqw' \
+            --user-agent 'Mozilla/5.0' \
+            'https://zainhing-ms43gf7py-zains-projects-0de7bb63.vercel.app/?_vercel_share=MkJPHjphIVBLx1NV2Wp0rVpfDT87F2UJ' \
             --output index.new.html
-          test -s index.new.html
+          echo '--- downloaded bytes ---'
+          wc -c index.new.html || true
+          echo '--- first 800 chars ---'
+          head -c 800 index.new.html || true
+          echo
+          echo '--- cookies ---'
+          cat cookies.txt || true
           grep -q 'Zain Hing | Mechanical Engineering Portfolio' index.new.html
-          grep -q 'Mechanical Engineering @ McMaster University' index.new.html
-          mv index.new.html index.html
-          rm -f cookies.txt
 
       - name: Commit final portfolio to main
         shell: bash
         run: |
           set -euo pipefail
-          rm -f .github/workflows/sync-v22.yml
+          grep -q 'Mechanical Engineering @ McMaster University' index.new.html
+          mv index.new.html index.html
+          rm -f cookies.txt .github/workflows/sync-v22.yml
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html .github/workflows/sync-v22.yml
-          if git diff --cached --quiet; then
-            echo 'No changes to commit.'
-            exit 0
-          fi
           git commit -m 'Deploy final v22 portfolio'
           git push origin HEAD:main
