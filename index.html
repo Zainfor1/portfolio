@@ -1358,6 +1358,410 @@ body.motion-paused #experience .experience-photo-open{transform:none!important;t
   #experience .experience-body>.detail-disclosure{margin-top:12px}
 }
 
+/* The process is a solid, full-width band at the end of the About section. */
+body.portfolio #about{padding-bottom:0}
+body.portfolio #about>.process-bar{
+  display:block;
+  width:100%;
+  max-width:none;
+  margin:clamp(42px,5.2vw,76px) 0 0;
+  padding:26px 0 6px;
+  border-block:1px solid #705943;
+  border-inline:0;
+  border-radius:0;
+  background:#172633;
+  box-shadow:none;
+  -webkit-backdrop-filter:none;
+  backdrop-filter:none;
+  overflow:hidden;
+}
+body.portfolio #about .process-heading{padding:0}
+body.portfolio #about .process-intro{
+  margin:0;
+  color:#e1c8ad;
+  font-size:11px;
+  letter-spacing:.025em;
+}
+body.portfolio #about .process-window{
+  width:100%;
+  max-width:none;
+  margin-inline:0;
+  padding:22px 0 28px;
+}
+body.portfolio #about .process-step .step-num{color:#c7a789}
+body.portfolio #about .process-step::after{color:#af9378}
+body.portfolio #about .process-bar.process-static .process-window{
+  width:min(1280px,calc(100% - 112px));
+  margin-inline:auto;
+  padding-inline:0;
+}
+
+/* Removing the field note also removes its reserved desktop grid row. */
+body.portfolio #projects .project-robot{grid-row:1}
+body.portfolio #projects .project-aircraft{grid-row:1}
+body.portfolio #projects .project-luggage{grid-row:2}
+
+@media(max-width:1150px){
+  body.portfolio #about .process-bar.process-static .process-window{width:calc(100% - 72px)}
+}
+@media(max-width:900px){
+  body.portfolio #about .process-bar.process-static .process-window{width:calc(100% - 56px)}
+}
+@media(max-width:700px){
+  body.portfolio #about>.process-bar{margin-top:32px;padding-top:22px}
+  body.portfolio #about .process-intro{font-size:10px}
+  body.portfolio #about .process-window{padding:19px 0 24px}
+  body.portfolio #about .process-bar.process-static .process-window{width:calc(100% - 40px)}
+}
+@media(max-width:359px){
+  body.portfolio #about .process-bar.process-static .process-window{width:calc(100% - 32px)}
+}
+@media print{
+  body.portfolio #about{padding-bottom:20px}
+  body.portfolio #about>.process-bar{display:none!important}
+}
+
+/* Solid controls. Filled shapes carry the hierarchy; borders follow each fill. */
+body.portfolio{
+  --control-surface:#355574;
+  --control-surface-hover:#42688c;
+  --control-edge:#355574;
+  --control-edge-hover:#42688c;
+  --control-ink:#f4f7fb;
+  --control-primary:#9bc5f4;
+  --control-primary-hover:#bbd9fa;
+  --control-primary-ink:#132235;
+  --control-selected:#ddaa80;
+  --control-selected-hover:#ecc09b;
+  --control-selected-ink:#182431;
+  --control-disabled:#263645;
+  --control-disabled-ink:#aab6c1;
+}
+
+body.portfolio :where(.button,.text-button,.header-contact,.motion-button,.mobile-menu-toggle,#map-reset,#courses-toggle,.source-reference-actions button,#print-page,.media-dialog-header button){
+  background:var(--control-surface);
+  border-color:var(--control-surface);
+  color:var(--control-ink);
+  opacity:1;
+  font-weight:550;
+  box-shadow:none;
+  text-shadow:none;
+  backdrop-filter:none;
+  -webkit-backdrop-filter:none;
+}
+body.portfolio .motion-button,
+body.portfolio .motion-button .motion-glyph{color:var(--control-ink)}
+body.portfolio .button.primary,
+body.portfolio .header-contact{
+  background:var(--control-primary);
+  border-color:var(--control-primary);
+  color:var(--control-primary-ink);
+  font-weight:600;
+}
+body.portfolio :where(.text-button,.motion-button)[aria-pressed=true],
+body.portfolio #courses-toggle[aria-expanded=true],
+body.portfolio .mobile-menu-toggle[aria-expanded=true]{
+  background:var(--control-selected);
+  border-color:var(--control-selected);
+  color:var(--control-selected-ink);
+}
+body.portfolio .motion-button[aria-pressed=true] .motion-glyph{color:var(--control-selected-ink)}
+
+/* A warm, fully filled current-role link and quieter, smaller status badges. */
+body.portfolio .current-role,
+body.portfolio .current-badge .pill,
+body.portfolio .diploma-meta .pill{
+  background:var(--control-selected);
+  border-color:var(--control-selected);
+  color:var(--control-selected-ink);
+  opacity:1;
+  font-weight:600;
+  box-shadow:none;
+  text-shadow:none;
+  backdrop-filter:none;
+  -webkit-backdrop-filter:none;
+}
+body.portfolio .current-role .status-dot{
+  background:var(--control-selected-ink);
+  box-shadow:none;
+}
+
+/* Compact image actions. Full photograph wrappers keep their original geometry. */
+body.portfolio #experience .experience-original-button,
+body.portfolio #experience .experience-photo-open,
+body.portfolio #projects .cad-caption>button,
+body.portfolio #projects .project-luggage .cad-caption>button{
+  background:var(--control-surface);
+  border-color:var(--control-surface);
+  color:var(--control-ink);
+  opacity:1;
+  font-weight:550;
+  box-shadow:none;
+  backdrop-filter:none;
+  -webkit-backdrop-filter:none;
+}
+body.portfolio #projects .cad-launch{
+  background:var(--control-primary)!important;
+  border-color:var(--control-primary)!important;
+  color:var(--control-primary-ink)!important;
+  opacity:1;
+  font-weight:600;
+  box-shadow:none!important;
+  backdrop-filter:none;
+  -webkit-backdrop-filter:none;
+}
+
+/* The disclosure row remains editorial; its small action is a solid circle. */
+body.portfolio .detail-disclosure.progressive-detail>summary::after,
+body.portfolio .supporting-notes.progressive-detail>summary::after{
+  display:grid;
+  place-items:center;
+  width:28px;
+  height:28px;
+  min-width:28px;
+  padding:0;
+  border:0;
+  border-radius:50%;
+  background:var(--control-surface);
+  color:var(--control-ink);
+  font-size:19px;
+  line-height:1;
+}
+body.portfolio .archive-summary-action .disclosure-mark{
+  background:var(--control-surface);
+  border-color:var(--control-surface);
+}
+body.portfolio .archive-summary-action .disclosure-mark::before,
+body.portfolio .archive-summary-action .disclosure-mark::after{
+  background:var(--control-ink);
+}
+body.portfolio .course-year>summary .year-plus{
+  width:26px;
+  height:26px;
+  min-width:26px;
+  border-radius:50%;
+  background:var(--control-surface);
+}
+body.portfolio .course-year>summary .year-plus::before,
+body.portfolio .course-year>summary .year-plus::after{
+  width:10px;
+  height:1px;
+  left:50%;
+  top:50%;
+  margin-left:-5px;
+  margin-top:-.5px;
+  background:var(--control-ink);
+}
+body.portfolio .detail-disclosure.progressive-detail[open]>summary::after,
+body.portfolio .supporting-notes.progressive-detail[open]>summary::after,
+body.portfolio .archive-disclosure[open] .archive-summary-action .disclosure-mark,
+body.portfolio .course-year[open]>summary .year-plus{
+  background:var(--control-selected);
+  border-color:var(--control-selected);
+  color:var(--control-selected-ink);
+}
+body.portfolio .archive-disclosure[open] .disclosure-mark::before,
+body.portfolio .archive-disclosure[open] .disclosure-mark::after,
+body.portfolio .course-year[open]>summary .year-plus::before,
+body.portfolio .course-year[open]>summary .year-plus::after{
+  background:var(--control-selected-ink);
+}
+
+/* Subject selections keep their connection-line colours. */
+body.portfolio .knowledge-map-spatial .knowledge-node{
+  background:var(--control-surface);
+  border-color:var(--control-surface);
+  color:var(--control-ink);
+  opacity:1;
+  box-shadow:none;
+  backdrop-filter:none;
+  -webkit-backdrop-filter:none;
+}
+body.portfolio .knowledge-map-spatial .knowledge-node[aria-pressed=true]{
+  background:var(--control-primary);
+  border-color:var(--control-primary);
+  color:var(--control-primary-ink);
+}
+body.portfolio .knowledge-map-spatial .knowledge-node[data-domain=measurement][aria-pressed=true]{
+  background:var(--teal);
+  border-color:var(--teal);
+  color:#122c2a;
+}
+body.portfolio .knowledge-map-spatial .knowledge-node[data-domain=thermal][aria-pressed=true],
+body.portfolio .knowledge-map-spatial .knowledge-node[data-domain=design][aria-pressed=true]{
+  background:var(--control-selected);
+  border-color:var(--control-selected);
+  color:var(--control-selected-ink);
+}
+
+/* CAD also inserts a stylesheet at runtime: keep these selectors authoritative. */
+body.portfolio .cad-workbench .cad-wb-button,
+body.portfolio .cad-workbench .cad-wb-icon-button,
+body.portfolio .cad-workbench .cad-wb-button.is-bordered,
+body.portfolio .viewer-toolbar button{
+  background:var(--control-surface);
+  border-color:var(--control-surface);
+  color:var(--control-ink)!important;
+  opacity:1;
+  box-shadow:none;
+  backdrop-filter:none;
+  -webkit-backdrop-filter:none;
+}
+body.portfolio .cad-workbench .cad-wb-button[aria-pressed=true],
+body.portfolio .cad-workbench .cad-wb-button.is-bordered[aria-pressed=true],
+body.portfolio .cad-workbench .cad-wb-icon-button[aria-pressed=true],
+body.portfolio .viewer-toolbar button[aria-pressed=true]{
+  background:var(--control-selected);
+  border-color:var(--control-selected);
+  color:var(--control-selected-ink)!important;
+}
+body.portfolio .cad-workbench .cad-wb-button.is-primary{
+  background:var(--control-primary);
+  border-color:var(--control-primary);
+  color:var(--control-primary-ink)!important;
+}
+body.portfolio .cad-workbench .cad-wb-tools,
+body.portfolio .cad-workbench .cad-wb-separation{
+  background:#142431;
+  backdrop-filter:none;
+  -webkit-backdrop-filter:none;
+}
+body.portfolio .cad-workbench .cad-part-row{border-color:#28445b}
+body.portfolio .cad-workbench .cad-part-select{
+  background:#28445b;
+  color:var(--control-ink);
+}
+body.portfolio .cad-workbench .cad-part-select::before{border-color:#b3cddd}
+body.portfolio .cad-workbench .cad-part-row.is-selected{background:var(--control-selected);border-color:var(--control-selected)}
+body.portfolio .cad-workbench .cad-part-row.is-selected>.cad-part-select{background:var(--control-selected);color:var(--control-selected-ink)}
+body.portfolio .cad-workbench .cad-part-row.is-selected>.cad-part-select::before{background:var(--control-selected-ink);border-color:var(--control-selected-ink)}
+body.portfolio .cad-workbench .cad-part-visibility{
+  background:var(--control-surface);
+  color:var(--control-ink)!important;
+}
+body.portfolio .cad-workbench .cad-part-visibility[aria-pressed=false]{background:var(--control-disabled);color:var(--control-disabled-ink)!important}
+body.portfolio .cad-workbench .cad-part-row.is-hidden{opacity:1;border-color:var(--control-disabled)}
+body.portfolio .cad-workbench .cad-part-row.is-hidden>.cad-part-select{background:var(--control-disabled);color:var(--control-disabled-ink)}
+body.portfolio .cad-workbench .cad-assembly-details>summary::after{
+  display:inline-grid;
+  place-items:center;
+  width:25px;
+  height:25px;
+  border-radius:50%;
+  background:var(--control-selected);
+  color:var(--control-selected-ink);
+  line-height:1;
+  font-size:17px;
+  margin-top:-3px;
+}
+body.portfolio .cad-workbench .cad-assembly-details:not([open])>summary::after{background:var(--control-surface);color:var(--control-ink)}
+
+/* Native range semantics with a solid track and thumb in both browser engines. */
+body.portfolio .cad-workbench #cad-assembly-separation{
+  appearance:none;
+  -webkit-appearance:none;
+  height:24px;
+  border:0;
+  border-radius:999px;
+  background:#142431;
+  opacity:1;
+}
+body.portfolio .cad-workbench #cad-assembly-separation::-webkit-slider-runnable-track{height:5px;background:#527492;border-radius:999px;border:0}
+body.portfolio .cad-workbench #cad-assembly-separation::-webkit-slider-thumb{appearance:none;-webkit-appearance:none;width:17px;height:17px;margin-top:-6px;background:var(--control-selected);border:0;border-radius:50%;box-shadow:none}
+body.portfolio .cad-workbench #cad-assembly-separation::-moz-range-track{height:5px;background:#527492;border-radius:999px;border:0}
+body.portfolio .cad-workbench #cad-assembly-separation::-moz-range-thumb{width:17px;height:17px;background:var(--control-selected);border:0;border-radius:50%;box-shadow:none}
+
+/* Disabled controls use muted solids, never reduced opacity. */
+body.portfolio :where(.button,.text-button,.motion-button,#map-reset,#courses-toggle):disabled,
+body.portfolio .button.primary:disabled,
+body.portfolio .cad-workbench .cad-wb-button:disabled,
+body.portfolio .cad-workbench .cad-wb-button.is-primary:disabled,
+body.portfolio .cad-workbench .cad-wb-button.is-bordered:disabled,
+body.portfolio .cad-workbench .cad-wb-icon-button:disabled,
+body.portfolio .viewer-toolbar button:disabled{
+  opacity:1;
+  background:var(--control-disabled);
+  border-color:var(--control-disabled);
+  color:var(--control-disabled-ink)!important;
+  box-shadow:none;
+  transform:none;
+}
+
+@media(hover:hover) and (pointer:fine){
+  body.portfolio :where(.button,.text-button,.header-contact,.motion-button,#map-reset,#courses-toggle,.source-reference-actions button,#print-page):not(:disabled):where(:not([aria-pressed=true]):not([aria-expanded=true])):hover,
+  body.portfolio :where(.mobile-menu-toggle,.media-dialog-header button):not([aria-expanded=true]):hover{
+    background:var(--control-surface-hover);
+    border-color:var(--control-surface-hover);
+    color:var(--control-ink);
+  }
+  body.portfolio .button.primary:not(:disabled):hover,
+  body.portfolio .header-contact:not(:disabled):hover{background:var(--control-primary-hover);border-color:var(--control-primary-hover);color:var(--control-primary-ink)}
+  body.portfolio :where(.text-button,.motion-button)[aria-pressed=true]:hover,
+  body.portfolio #courses-toggle[aria-expanded=true]:hover,
+  body.portfolio .mobile-menu-toggle[aria-expanded=true]:hover,
+  body.portfolio .current-role:hover{
+    background:var(--control-selected-hover);
+    border-color:var(--control-selected-hover);
+    color:var(--control-selected-ink);
+  }
+  body.portfolio #experience .experience-original-button:hover,
+  body.portfolio #experience .experience-photo-button:hover .experience-photo-open,
+  body.portfolio #projects .cad-caption>button:hover,
+  body.portfolio #projects .project-luggage .cad-caption>button:hover{
+    background:var(--control-surface-hover);
+    border-color:var(--control-surface-hover);
+    color:var(--control-ink);
+  }
+  body.portfolio #projects .cad-launch:hover{background:var(--control-primary-hover)!important;border-color:var(--control-primary-hover)!important;color:var(--control-primary-ink)!important}
+  body.portfolio .detail-disclosure.progressive-detail:not([open])>summary:hover::after,
+  body.portfolio .supporting-notes.progressive-detail:not([open])>summary:hover::after,
+  body.portfolio .archive-disclosure:not([open])>summary:hover .disclosure-mark,
+  body.portfolio .course-year:not([open])>summary:hover .year-plus{background:var(--control-surface-hover);border-color:var(--control-surface-hover)}
+  body.portfolio .archive-disclosure[open]>summary:hover .disclosure-mark{background:var(--control-selected-hover);border-color:var(--control-selected-hover)}
+  body.portfolio .knowledge-map-spatial .knowledge-node:not([aria-pressed=true]):hover{
+    background:var(--control-surface-hover);
+    border-color:var(--control-surface-hover);
+    color:var(--control-ink);
+  }
+  body.portfolio .cad-workbench .cad-wb-button:not(:disabled):not([aria-pressed=true]):hover,
+  body.portfolio .cad-workbench .cad-wb-icon-button:not(:disabled):not([aria-pressed=true]):hover,
+  body.portfolio .viewer-toolbar button:not(:disabled):not([aria-pressed=true]):hover{
+    background:var(--control-surface-hover);
+    border-color:var(--control-surface-hover);
+    color:var(--control-ink)!important;
+  }
+  body.portfolio .cad-workbench .cad-wb-button[aria-pressed=true]:not(:disabled):hover,
+  body.portfolio .cad-workbench .cad-wb-button.is-bordered[aria-pressed=true]:not(:disabled):hover,
+  body.portfolio .cad-workbench .cad-wb-icon-button[aria-pressed=true]:not(:disabled):hover,
+  body.portfolio .viewer-toolbar button[aria-pressed=true]:not(:disabled):hover{
+    background:var(--control-selected-hover);
+    border-color:var(--control-selected-hover);
+    color:var(--control-selected-ink)!important;
+  }
+  body.portfolio .cad-workbench .cad-wb-button.is-primary:not(:disabled):hover{background:var(--control-primary-hover);border-color:var(--control-primary-hover);color:var(--control-primary-ink)!important}
+  body.portfolio .cad-workbench .cad-part-select:hover{background:var(--control-surface)}
+  body.portfolio .cad-workbench .cad-part-row.is-selected>.cad-part-select:hover{background:var(--control-selected-hover)}
+  body.portfolio .cad-workbench .cad-part-visibility:hover{background:var(--control-surface-hover);color:var(--control-ink)!important}
+}
+
+body.portfolio :where(.button,.text-button,.header-contact,.motion-button,.mobile-menu-toggle,#map-reset,#courses-toggle,.source-reference-actions button,#print-page,.media-dialog-header button,.current-role):focus-visible,
+body.portfolio #experience .experience-original-button:focus-visible,
+body.portfolio #projects .cad-caption>button:focus-visible,
+body.portfolio .knowledge-map-spatial .knowledge-node:focus-visible,
+body.portfolio .cad-workbench :where(.cad-wb-button,.cad-wb-icon-button,.cad-part-visibility,#cad-assembly-separation):focus-visible{
+  outline:2px solid #c8e4ff;
+  outline-offset:4px;
+}
+body.portfolio .cad-workbench .cad-part-select:focus-visible{outline:2px solid #c8e4ff;outline-offset:-3px}
+
+@media print{
+  body.portfolio #print-page,
+  body.portfolio .source-reference-actions,
+  body.portfolio .current-role{display:none!important}
+  body.portfolio .current-badge .pill,
+  body.portfolio .diploma-meta .pill{background:#f1eee8;border-color:#b9ad9f;color:#252525}
+}
+
 /* A matched, softly rounded cursor family. Static SVGs are drawn by the browser,
    so there is no overlay, pointer tracking, lag, or animation loop. */
 :root{
@@ -1622,8 +2026,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <p class="about-copy">I’m a third-year Mechanical Engineering student at McMaster with a particular interest in aerospace. I enjoy modelling assemblies, checking their behaviour, and building prototypes to see how the design holds up. My experience includes rocket airframes, custom vehicle fabrication, and power generation equipment. Away from engineering, I’m usually on the basketball court or in the gym.</p>
           <dl class="about-facts"><div class="fact "><dt class="meta-label">Program</dt><dd>B.A.Sc. Mechanical Engineering</dd></div><div class="fact "><dt class="meta-label">University</dt><dd>McMaster University · Hamilton, Ontario</dd></div><div class="fact wide"><dt class="meta-label">Focus</dt><dd>Aerospace · Mechanical Design · Sustainable Energy</dd></div><div class="fact "><dt class="meta-label">Contact</dt><dd><a class="inline-link" href="mailto:zainhing@hotmail.com">zainhing@hotmail.com</a></dd></div><div class="fact "><dt class="meta-label">Resume</dt><dd><a class="inline-link" href="#" id="resumeViewerLink" data-resume target="_blank" rel="noopener">View My Resume ↗</a></dd></div></dl>
         </div>
-        <div class="process-bar process-static reveal" aria-label="Engineering process"><span class="process-intro">How a design gets there</span><div class="process-window"><div class="process-track"><ol class="process-sequence" aria-label="Six stages of the engineering process"><li class="process-step"><span class="step-num" aria-hidden="true">01</span><span class="step-name">Imagine</span></li><li class="process-step"><span class="step-num" aria-hidden="true">02</span><span class="step-name">Design</span></li><li class="process-step"><span class="step-num" aria-hidden="true">03</span><span class="step-name">Simulate</span></li><li class="process-step"><span class="step-num" aria-hidden="true">04</span><span class="step-name">Build</span></li><li class="process-step"><span class="step-num" aria-hidden="true">05</span><span class="step-name">Test</span></li><li class="process-step"><span class="step-num" aria-hidden="true">06</span><span class="step-name">Iterate</span></li></ol></div></div></div>
       </div>
+      <div class="process-bar process-static reveal" aria-label="Engineering process"><div class="shell process-heading"><span class="process-intro">How a design gets there</span></div><div class="process-window"><div class="process-track"><ol class="process-sequence" aria-label="Six stages of the engineering process"><li class="process-step"><span class="step-num" aria-hidden="true">01</span><span class="step-name">Imagine</span></li><li class="process-step"><span class="step-num" aria-hidden="true">02</span><span class="step-name">Design</span></li><li class="process-step"><span class="step-num" aria-hidden="true">03</span><span class="step-name">Simulate</span></li><li class="process-step"><span class="step-num" aria-hidden="true">04</span><span class="step-name">Build</span></li><li class="process-step"><span class="step-num" aria-hidden="true">05</span><span class="step-name">Test</span></li><li class="process-step"><span class="step-num" aria-hidden="true">06</span><span class="step-name">Iterate</span></li></ol></div></div></div>
     </section>
 
     <section id="experience" class="section" aria-labelledby="experience-title">
@@ -1725,7 +2129,6 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
             </div>
           </div><div class="project-notes" id="aircraft-notes"><details class="detail-disclosure"><summary>Read the engineering <span>Brief, specifications &amp; results</span></summary><p class="project-notes-meta">Aug. 2025 – Sept. 2025 · FEA · SolidWorks</p><p class="project-original-brief">Performed structural simulation work on an aircraft body concept using loading assumptions and finite element analysis to evaluate stress, displacement, and structural safety.</p><dl class="project-meta"><div><dt>Method</dt><dd>Loading assumptions → FEA → Review</dd></div><div><dt>Focus</dt><dd>Stress · displacement · deformation</dd></div><div><dt>Purpose</dt><dd>Identify concentration areas</dd></div><div><dt>Outcome</dt><dd>Support safer design decisions</dd></div><div><dt>Material</dt><dd>Aluminum 6061-T6</dd></div><div><dt>Flight envelope</dt><dd>55° climb · up to 161 m/s</dd></div></dl><ul class="technical-list"><li>Modeled a mach-capable aluminum 6061-T6 fighter jet in SolidWorks and validated its structural integrity during a steep 55° climb via FEA and aerodynamic load analysis, achieving a 1.62×FoS at critical load paths.</li><li>Established a safe flight envelope through hand calculations restricting wing deflection to &lt;2% up to 161 m/s.</li></ul></details></div>
         </article>
-<aside class="project-fieldnote reveal" aria-label="McMaster Rocketry design result"><div class="fieldnote-top"><span>From the flight log</span><a href="#experience">McMaster Rocketry ↗</a></div><p><strong>22%</strong><span>less structural mass.<br>Six fin variants evaluated.</span></p><svg viewBox="0 0 200 78" fill="none" aria-hidden="true"><path d="M8 65h181M22 58 91 9l53 49H22Z" stroke="currentColor" stroke-width="1.1"/><path d="m47 58 45-33 36 33M91 9v50" stroke="currentColor" stroke-dasharray="2 4" opacity=".5"/><path d="m165 10 24 48M166 13l-1-5 5 3m16 43 3 5-6-2" stroke="currentColor"/></svg></aside>
 <article class="project-card project-luggage reveal" id="project-luggage" aria-labelledby="project-luggage-title">
           <div class="project-header"><span class="project-ref">Project 03</span><span>Automation · Product Handling</span></div>
           <div class="project-body">
