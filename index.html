@@ -1940,7 +1940,7 @@ body.portfolio .liquid-glass,body.portfolio #projects .cad-launch.liquid-glass{b
 .prism-char{color:inherit}
 .prism-pending .prism-char{opacity:0}
 .prism-running .prism-char{
-  animation:prism-ink 1050ms cubic-bezier(.2,.65,.25,1) both;
+  animation:prism-ink var(--prism-ink-duration,1050ms) cubic-bezier(.2,.65,.25,1) both;
   animation-delay:var(--prism-delay,0ms);
 }
 @keyframes prism-ink{
@@ -1981,6 +1981,9 @@ body.motion-paused .prism-char{animation:none!important;opacity:1!important;colo
 }
 body.motion-paused .hero-description{opacity:1!important;-webkit-mask-image:none!important;mask-image:none!important}
 @media print{.hero-description{opacity:1!important;-webkit-mask-image:none!important;mask-image:none!important}}
+</style>
+<style id="intro-fluid-timing">
+.hero-name .letter-face{animation-duration:.65s;animation-delay:calc(var(--letter)*.035s)}
 </style>
 </head>
 <body class="portfolio antialiased">
@@ -4855,7 +4858,7 @@ function initCADViewers(options) {
 /* Standalone liquid-button enhancement. Native links, labels and events stay intact. */
 (()=>{
   'use strict';
-  const selector='a.button,a.header-contact,button:not(.experience-photo-button):not(.knowledge-node):not(.cad-part-select)';
+  const selector='a.button,a.header-contact,button:not(.knowledge-node):not(.cad-part-select)';
   const reduced=matchMedia('(prefers-reduced-motion: reduce)');
   const contrast=matchMedia('(forced-colors: active)');
   const records=new WeakMap(), active=new Set();
@@ -4929,7 +4932,7 @@ function initCADViewers(options) {
     el.classList.add('liquid-control');
     if(style.position==='static')el.classList.add('liquid-positioned');
     // Only standalone action controls receive the glass and ripple treatment.
-    el.classList.add('liquid-glass');
+    if(!el.matches('.experience-photo-button'))el.classList.add('liquid-glass');
     rec={el,fx:null,w:0,h:0,x:0,y:0,start:0,hover:false,focused:false,kind:'hover'};
     records.set(el,rec);decorations(rec);return rec;
   }
@@ -5058,9 +5061,10 @@ function initCADViewers(options) {
   for(const job of Array.from(jobs))finish(job);
   cancelAnimationFrame(raf);raf=0;
  }
- function write(root,{pace=22,delay=0,maxSpan=950}={}){
+ function write(root,{pace=22,delay=0,maxSpan=950,inkDuration=1050}={}){
   if(!root||root.dataset.prismPrepared)return;
   root.dataset.prismPrepared='true';
+  root.style.setProperty('--prism-ink-duration',inkDuration+'ms');
   const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{acceptNode:n=>n.nodeValue.trim()?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_REJECT});
   const nodes=[];while(walker.nextNode())nodes.push(walker.currentNode);
   const length=nodes.reduce((n,node)=>n+Array.from(node.nodeValue).length,0);
@@ -5083,7 +5087,7 @@ function initCADViewers(options) {
    node.replaceWith(fragment);
   }
   if(!index)return;
-  const job={kind:'write',el:root,duration:delay+index*pace+1100,started:false};
+  const job={kind:'write',el:root,duration:delay+Math.max(0,index-1)*pace+inkDuration,started:false};
   root.classList.add('prism-pending');jobs.add(job);observer.observe(root);return job;
  }
  function count(root,stagger){
@@ -5116,7 +5120,7 @@ function initCADViewers(options) {
   if(disabled()){settleAll();return;}
   for(const job of counts){
    if(job.kind==='centre'){
-    const t=clamp((now-job.start)/1050);
+    const t=clamp((now-job.start)/620);
     if(t>=1){finish(job);continue;}
     const spread=(1-Math.pow(1-t,2))*150;
     job.el.style.setProperty('--hero-reveal-mask','radial-gradient(ellipse farthest-corner at 50% 50%,#000 '+Math.max(0,spread-38).toFixed(2)+'%,transparent '+spread.toFixed(2)+'%)');
@@ -5154,11 +5158,11 @@ function initCADViewers(options) {
    job.started=true;observer.unobserve(job.el);
    if(disabled()){finish(job);continue;}
    if(job.kind==='count'){job.start=performance.now()+120;counts.add(job);if(!raf)raf=requestAnimationFrame(render);}
-   else{job.el.classList.remove('prism-pending');job.el.classList.add('prism-running');job.timer=setTimeout(()=>finish(job),job.duration+100);}
+   else{job.el.classList.remove('prism-pending');job.el.classList.add('prism-running');job.timer=setTimeout(()=>finish(job),job.duration+30);}
   }
  },{threshold:.25,rootMargin:'0px 0px -5% 0px'});
  // The paragraph opens softly from its centre once the headline has fully resolved.
- const headline=write(document.querySelector('.hero-title'),{pace:28,delay:260,maxSpan:1050});
+ const headline=write(document.querySelector('.hero-title'),{pace:11,delay:30,maxSpan:360,inkDuration:560});
  const description=document.querySelector('.hero-description');
  if(description){
   const paragraph={kind:'centre',el:description,ready:!headline,inView:false,started:false};
