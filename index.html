@@ -1888,7 +1888,9 @@ body.portfolio .hero-name .name-word:last-child{
 /* Glass controls: refracted waves, prismatic edges, and a soft inset sheen. */
 body.portfolio .liquid-control{isolation:isolate;--liquid-x:50%;--liquid-y:50%;--liquid-light:0;--liquid-radius:0px}
 body.portfolio .liquid-positioned{position:relative}
-body.portfolio .liquid-glass:not(:disabled):not([aria-disabled="true"]){
+body.portfolio .liquid-glass:not(:disabled):not([aria-disabled="true"]),
+body.portfolio #projects .cad-launch.liquid-glass:not(:disabled){
+  border-radius:7px!important;
   background:linear-gradient(115deg,rgba(255,255,255,.025) 8%,rgba(255,255,255,.105) 43%,rgba(255,255,255,.025) 75%),rgba(123,158,193,.065)!important;
   border-color:rgba(208,228,250,.2)!important;
   color:var(--control-ink)!important;
@@ -1896,12 +1898,13 @@ body.portfolio .liquid-glass:not(:disabled):not([aria-disabled="true"]){
   backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
   transition:background .35s ease,box-shadow .35s ease,border-color .35s ease,color .35s ease;
 }
-body.portfolio .liquid-glass:is(.primary,.header-contact,.is-primary):not(:disabled):not([aria-disabled="true"]){
-  background:linear-gradient(115deg,rgba(255,255,255,.08),rgba(255,255,255,.3) 44%,rgba(255,255,255,.04) 75%),rgba(155,197,244,.9)!important;
-  border-color:rgba(226,241,255,.5)!important;color:var(--control-primary-ink)!important;
-  box-shadow:inset 0 1px 1px rgba(255,255,255,.55),inset 0 -2px 3px rgba(255,255,255,.28),0 3px 7px -3px rgba(0,0,0,.65)!important;
+body.portfolio .liquid-glass:is(.primary,.header-contact,.is-primary):not(:disabled):not([aria-disabled="true"]),
+body.portfolio #projects .cad-launch.liquid-glass:not(:disabled){
+  background:linear-gradient(115deg,rgba(255,255,255,.025),rgba(190,221,255,.12) 44%,rgba(255,255,255,.025) 75%),rgba(117,172,232,.18)!important;
+  border-color:rgba(168,209,255,.42)!important;color:var(--control-ink)!important;
+  box-shadow:inset 0 1px 1px rgba(213,234,255,.24),inset 0 -2px 3px rgba(192,221,255,.12),0 3px 7px -3px rgba(0,0,0,.65)!important;
 }
-body.portfolio .liquid-glass:is([aria-pressed="true"],[aria-expanded="true"],.is-selected,.current-role):not(:disabled){
+body.portfolio .liquid-glass:is([aria-pressed="true"],[aria-expanded="true"],.is-selected):not(:disabled){
   background:linear-gradient(115deg,rgba(255,255,255,.06),rgba(255,255,255,.22) 44%,rgba(255,255,255,.03) 75%),rgba(221,170,128,.88)!important;
   border-color:rgba(255,218,184,.5)!important;color:var(--control-selected-ink)!important;
 }
@@ -1928,6 +1931,8 @@ body.motion-paused .liquid-control>.liquid-sheen{display:none}
 @media(forced-colors:active){body.portfolio .liquid-control{filter:none!important}body.portfolio .liquid-control>.liquid-edge,body.portfolio .liquid-control>.liquid-sheen{display:none}body.portfolio .liquid-glass{background:ButtonFace!important;color:ButtonText!important;border:1px solid ButtonText!important;box-shadow:none!important}}
 @media print{body.portfolio .liquid-control{filter:none!important}body.portfolio .liquid-control>.liquid-edge,body.portfolio .liquid-control>.liquid-sheen{display:none}}
 
+
+body.portfolio .liquid-glass,body.portfolio #projects .cad-launch.liquid-glass{border-radius:7px!important}
 </style>
 <style id="prism-text-style">
 /* Rainbow ink enters in reading order, then resolves to the original palette. */
@@ -1963,6 +1968,20 @@ body.motion-paused .prism-char{animation:none!important;opacity:1!important;colo
 }
 
 </style>
+<style id="hero-centre-style">
+/* A soft elliptical opening in the paragraph's original colour. */
+.hero-description.hero-centre-waiting{opacity:0}
+.hero-description.hero-centre-running{
+ opacity:var(--hero-reveal-opacity,0);
+ -webkit-mask-image:var(--hero-reveal-mask);mask-image:var(--hero-reveal-mask);
+ -webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;
+}
+@media(prefers-reduced-motion:reduce),(forced-colors:active){
+ .hero-description.hero-centre-waiting,.hero-description.hero-centre-running{opacity:1!important;-webkit-mask-image:none!important;mask-image:none!important}
+}
+body.motion-paused .hero-description{opacity:1!important;-webkit-mask-image:none!important;mask-image:none!important}
+@media print{.hero-description{opacity:1!important;-webkit-mask-image:none!important;mask-image:none!important}}
+</style>
 </head>
 <body class="portfolio antialiased">
   <a class="skip-link" href="#about">Skip to content</a>
@@ -1990,7 +2009,7 @@ body.motion-paused .prism-char{animation:none!important;opacity:1!important;colo
       <div class="hero-sticky shell">
         <div class="hero-topline">
           <p class="eyebrow"><span class="small-orbit" aria-hidden="true"></span>Mechanical engineering · McMaster</p>
-          <a class="pill current-role" href="#experience"><span class="status-dot" aria-hidden="true"></span>Currently at OPG <span aria-hidden="true">↗</span></a>
+          
         </div>
         <div class="hero-composition">
         <div class="hero-drawing" aria-hidden="true"><!-- Decorative engineering assembly. Root toggles .is-active when this figure enters view. -->
@@ -4836,7 +4855,7 @@ function initCADViewers(options) {
 /* Standalone liquid-button enhancement. Native links, labels and events stay intact. */
 (()=>{
   'use strict';
-  const selector='button,a.button,a.header-contact,a.current-role,a.contact-link,a.contact-email,[role="button"],summary';
+  const selector='a.button,a.header-contact,button:not(.experience-photo-button):not(.knowledge-node):not(.cad-part-select)';
   const reduced=matchMedia('(prefers-reduced-motion: reduce)');
   const contrast=matchMedia('(forced-colors: active)');
   const records=new WeakMap(), active=new Set();
@@ -4909,9 +4928,9 @@ function initCADViewers(options) {
     const style=getComputedStyle(el);
     el.classList.add('liquid-control');
     if(style.position==='static')el.classList.add('liquid-positioned');
-    // Keep image launchers, node maps and full-width disclosures in their existing layout.
-    if(!el.matches('summary,.experience-photo-button,.cad-launch,.knowledge-node,.cad-part-select,.contact-email,.contact-link'))el.classList.add('liquid-glass');
-    rec={el,fx:null,w:0,h:0,x:0,y:0,start:0,lastMove:0,hover:false,kind:'hover'};
+    // Only standalone action controls receive the glass and ripple treatment.
+    el.classList.add('liquid-glass');
+    rec={el,fx:null,w:0,h:0,x:0,y:0,start:0,hover:false,focused:false,kind:'hover'};
     records.set(el,rec);decorations(rec);return rec;
   }
   function stop(rec){
@@ -4931,7 +4950,7 @@ function initCADViewers(options) {
     const mouse=event&&Number.isFinite(event.clientX)&&!(event.type==='click'&&event.detail===0);
     rec.x=mouse?clamp((event.clientX-box.left)*rec.w/box.width,0,rec.w):rec.w*.5;
     rec.y=mouse?clamp((event.clientY-box.top)*rec.h/box.height,0,rec.h):rec.h*.5;
-    rec.kind=kind;rec.start=performance.now();rec.lastMove=rec.start;
+    rec.kind=kind;rec.start=performance.now();
     if(!rec.fx&&!makeFilter(rec))return;
     rec.el.style.setProperty('--liquid-x',rec.x+'px');rec.el.style.setProperty('--liquid-y',rec.y+'px');
     rec.el.classList.add('liquid-active');active.add(rec);
@@ -4960,22 +4979,28 @@ function initCADViewers(options) {
   function control(event){return event.target instanceof Element?event.target.closest(selector):null;}
   document.addEventListener('pointerover',event=>{
     const el=control(event);if(!el||event.pointerType==='touch'||(event.relatedTarget instanceof Node&&el.contains(event.relatedTarget)))return;
-    const rec=enhance(el);rec.hover=true;play(el,event);
-  },{passive:true});
-  document.addEventListener('pointermove',event=>{
-    const el=control(event);if(!el||event.pointerType==='touch')return;
-    const rec=records.get(el);if(!rec||rec.kind==='click'&&performance.now()-rec.start<700)return;
-    const now=performance.now(),box=el.getBoundingClientRect();
-    if(now-rec.lastMove>360&&Math.hypot(event.clientX-box.left-rec.x,event.clientY-box.top-rec.y)>14)play(el,event);
+    const rec=enhance(el);if(rec.hover)return;rec.hover=true;play(el,event);
   },{passive:true});
   document.addEventListener('pointerout',event=>{
     const el=control(event);if(!el||event.relatedTarget instanceof Node&&el.contains(event.relatedTarget))return;
     const rec=records.get(el);if(rec)rec.hover=false;
   },{passive:true});
-  // Run on press so navigating links show the ripple immediately; no navigation delay.
-  document.addEventListener('pointerdown',event=>{const el=control(event);if(el&&event.button===0)play(el,event,'click');},{passive:true});
-  document.addEventListener('click',event=>{const el=control(event);if(el&&event.detail===0)play(el,event,'click');},{passive:true});
-  document.addEventListener('focusin',event=>{const el=control(event);if(el&&el.matches(':focus-visible'))play(el,null);});
+  // Mouse: one wave per entry. Touch: one wave per tap. Keyboard: one per focus.
+  document.addEventListener('pointerdown',event=>{
+    const el=control(event);if(!el||event.button!==0)return;
+    if(event.pointerType==='touch')play(el,event,'click');
+    else{const rec=enhance(el);if(!rec.hover){rec.hover=true;play(el,event);}}
+  },{passive:true});
+  document.addEventListener('focusin',event=>{
+    const el=control(event);if(!el)return;
+    const rec=enhance(el);rec.focused=true;
+    if(el.matches(':focus-visible')&&!rec.hover)play(el,null);
+  });
+  document.addEventListener('focusout',event=>{const el=control(event);if(el){const rec=records.get(el);if(rec)rec.focused=false;}});
+  document.addEventListener('click',event=>{
+    const el=control(event);if(!el||event.detail!==0)return;
+    const rec=enhance(el);if(!rec.hover&&!rec.focused)play(el,event,'click');
+  },{passive:true});
   function clear(){for(const rec of active)stop(rec);cancelAnimationFrame(frame);frame=0;}
   document.addEventListener('visibilitychange',()=>{if(document.hidden)clear();});
   window.addEventListener('pagehide',clear);
@@ -5013,8 +5038,13 @@ function initCADViewers(options) {
  const clamp=v=>Math.max(0,Math.min(1,v));
  const smooth=v=>{v=clamp(v);return v*v*(3-2*v)};
  function finish(job){
+  if(!jobs.has(job))return;
   clearTimeout(job.timer);observer.unobserve(job.el);counts.delete(job);
   if(job.kind==='count')job.el.replaceWith(document.createTextNode(job.text));
+  else if(job.kind==='centre'){
+   job.el.classList.remove('hero-centre-waiting','hero-centre-running');
+   job.el.style.removeProperty('--hero-reveal-mask');job.el.style.removeProperty('--hero-reveal-opacity');
+  }
   else{
    job.el.classList.remove('prism-pending','prism-running');
    // Unwrap only our own spans: retain the headline's original em/strong markup.
@@ -5022,6 +5052,7 @@ function initCADViewers(options) {
    job.el.normalize();
   }
   jobs.delete(job);
+  if(job.afterFinish)job.afterFinish();
  }
  function settleAll(){
   for(const job of Array.from(jobs))finish(job);
@@ -5053,7 +5084,7 @@ function initCADViewers(options) {
   }
   if(!index)return;
   const job={kind:'write',el:root,duration:delay+index*pace+1100,started:false};
-  root.classList.add('prism-pending');jobs.add(job);observer.observe(root);
+  root.classList.add('prism-pending');jobs.add(job);observer.observe(root);return job;
  }
  function count(root,stagger){
   const text=root.textContent;
@@ -5071,10 +5102,27 @@ function initCADViewers(options) {
   const job={kind:'count',el:wrapper,text,target,decimals,numeric,offset:match.index,live,final:rgb(final),stagger,duration:1700,started:false};
   jobs.add(job);observer.observe(wrapper);
  }
+ function startCentre(job){
+  if(!jobs.has(job)||job.started||!job.ready||!job.inView)return;
+  if(disabled()){finish(job);return;}
+  job.started=true;job.start=performance.now();
+  job.el.style.setProperty('--hero-reveal-opacity','0');
+  job.el.style.setProperty('--hero-reveal-mask','radial-gradient(ellipse farthest-corner at 50% 50%,#000 0%,transparent 0%)');
+  job.el.classList.replace('hero-centre-waiting','hero-centre-running');
+  observer.unobserve(job.el);counts.add(job);if(!raf)raf=requestAnimationFrame(render);
+ }
  function render(now){
   raf=0;
   if(disabled()){settleAll();return;}
   for(const job of counts){
+   if(job.kind==='centre'){
+    const t=clamp((now-job.start)/1050);
+    if(t>=1){finish(job);continue;}
+    const spread=(1-Math.pow(1-t,2))*150;
+    job.el.style.setProperty('--hero-reveal-mask','radial-gradient(ellipse farthest-corner at 50% 50%,#000 '+Math.max(0,spread-38).toFixed(2)+'%,transparent '+spread.toFixed(2)+'%)');
+    job.el.style.setProperty('--hero-reveal-opacity',smooth(t/.22).toFixed(3));
+    continue;
+   }
    const elapsed=now-job.start-job.stagger;if(elapsed<0)continue;
    if(elapsed>=job.duration){finish(job);continue;}
    const t=clamp(elapsed/1200),eased=1-Math.pow(1-t,3);
@@ -5102,15 +5150,21 @@ function initCADViewers(options) {
   for(const entry of entries){
    if(!entry.isIntersecting)continue;
    const job=Array.from(jobs).find(j=>j.el===entry.target);if(!job||job.started)continue;
+   if(job.kind==='centre'){job.inView=true;startCentre(job);continue;}
    job.started=true;observer.unobserve(job.el);
    if(disabled()){finish(job);continue;}
    if(job.kind==='count'){job.start=performance.now()+120;counts.add(job);if(!raf)raf=requestAnimationFrame(render);}
    else{job.el.classList.remove('prism-pending');job.el.classList.add('prism-running');job.timer=setTimeout(()=>finish(job),job.duration+100);}
   }
  },{threshold:.25,rootMargin:'0px 0px -5% 0px'});
- // Hero reads as one sequence, with a short breathing space before the paragraph.
- write(document.querySelector('.hero-title'),{pace:28,delay:260,maxSpan:1050});
- write(document.querySelector('.hero-description'),{pace:12,delay:700,maxSpan:1600});
+ // The paragraph opens softly from its centre once the headline has fully resolved.
+ const headline=write(document.querySelector('.hero-title'),{pace:28,delay:260,maxSpan:1050});
+ const description=document.querySelector('.hero-description');
+ if(description){
+  const paragraph={kind:'centre',el:description,ready:!headline,inView:false,started:false};
+  description.classList.add('hero-centre-waiting');jobs.add(paragraph);observer.observe(description);
+  if(headline)headline.afterFinish=()=>{paragraph.ready=true;startCentre(paragraph);};
+ }
  document.querySelectorAll('#experience .metric-value,#projects .project-result .value').forEach((el,i)=>count(el,(i%3)*90));
  const roots=document.querySelectorAll('#experience .experience-summary,#experience .technical-list li,#projects .project-headline,#projects .project-description,#projects .technical-list li,#projects .project-meta dd,#projects .project-result .label,#projects .archive-item p');
  // Capture quantities with their signs, ranges and units; do not split model IDs or 3D/2D labels.
