@@ -1983,7 +1983,7 @@ body.motion-paused .hero-description{opacity:1!important;-webkit-mask-image:none
 @media print{.hero-description{opacity:1!important;-webkit-mask-image:none!important;mask-image:none!important}}
 </style>
 <style id="intro-fluid-timing">
-.hero-name .letter-face{animation-duration:.65s;animation-delay:calc(var(--letter)*.035s)}
+.hero-name .letter-face{animation-duration:1.1s;animation-delay:calc(var(--letter)*.075s)}
 </style>
 </head>
 <body class="portfolio antialiased">
@@ -5120,7 +5120,7 @@ function initCADViewers(options) {
   if(disabled()){settleAll();return;}
   for(const job of counts){
    if(job.kind==='centre'){
-    const t=clamp((now-job.start)/620);
+    const t=clamp((now-job.start)/1000);
     if(t>=1){finish(job);continue;}
     const spread=(1-Math.pow(1-t,2))*150;
     job.el.style.setProperty('--hero-reveal-mask','radial-gradient(ellipse farthest-corner at 50% 50%,#000 '+Math.max(0,spread-38).toFixed(2)+'%,transparent '+spread.toFixed(2)+'%)');
@@ -5158,11 +5158,11 @@ function initCADViewers(options) {
    job.started=true;observer.unobserve(job.el);
    if(disabled()){finish(job);continue;}
    if(job.kind==='count'){job.start=performance.now()+120;counts.add(job);if(!raf)raf=requestAnimationFrame(render);}
-   else{job.el.classList.remove('prism-pending');job.el.classList.add('prism-running');job.timer=setTimeout(()=>finish(job),job.duration+30);}
+   else{job.el.classList.remove('prism-pending');job.el.classList.add('prism-running');job.timer=setTimeout(()=>finish(job),job.duration);}
   }
  },{threshold:.25,rootMargin:'0px 0px -5% 0px'});
  // The paragraph opens softly from its centre once the headline has fully resolved.
- const headline=write(document.querySelector('.hero-title'),{pace:11,delay:30,maxSpan:360,inkDuration:560});
+ const headline=write(document.querySelector('.hero-title'),{pace:62,delay:30,maxSpan:2100,inkDuration:900});
  const description=document.querySelector('.hero-description');
  if(description){
   const paragraph={kind:'centre',el:description,ready:!headline,inView:false,started:false};
