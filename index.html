@@ -2084,6 +2084,28 @@ body.motion-paused .experience-animation .ea-motion{animation-play-state:paused!
  #education .section-head{gap:30px;margin-bottom:18px;padding-bottom:18px}
 }
 </style>
+
+<style id="hero-intro-sequence-style">
+html[data-hero-intro] .hero-copy{visibility:hidden}
+html[data-hero-intro="preparing"] .hero-name .letter-face{animation-play-state:paused}
+@media(prefers-reduced-motion:reduce),(forced-colors:active){html[data-hero-intro] .hero-copy{visibility:visible}}
+html[data-hero-intro] body.motion-paused .hero-copy{visibility:visible}
+@media print{html[data-hero-intro] .hero-copy{visibility:visible}}
+</style>
+<script id="hero-intro-sequence-boot">
+(()=>{
+ const root=document.documentElement;
+ let safety;
+ const reveal=()=>{root.removeAttribute('data-hero-intro');clearTimeout(safety);};
+ try{
+  window.portfolioHeroIntro={reveal,disabled:false};
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches||matchMedia('(forced-colors: active)').matches||localStorage.getItem('zh:motion')==='paused'){window.portfolioHeroIntro.disabled=true;return;}
+  root.setAttribute('data-hero-intro','preparing');
+  // Fail open if a later script cannot initialize. No-JS stays readable.
+  safety=setTimeout(reveal,12000);
+ }catch{reveal();}
+})();
+</script>
 </head>
 <body class="portfolio antialiased">
   <a class="skip-link" href="#about">Skip to content</a>
@@ -2201,6 +2223,202 @@ body.motion-paused .experience-animation .ea-motion{animation-play-state:paused!
         </div>
       </div>
     </section>
+<script id="prism-text-script">
+/* Once-per-visit spectrum reveals. Every final value remains intact and accessible. */
+(()=>{
+ 'use strict';
+ const reduce=matchMedia('(prefers-reduced-motion: reduce)'),contrast=matchMedia('(forced-colors: active)');
+ const disabled=()=>reduce.matches||contrast.matches||document.body.classList.contains('motion-paused');
+ if(disabled()||window.portfolioHeroIntro?.disabled||!('IntersectionObserver' in window)){window.portfolioHeroIntro?.reveal();return;}
+ const palette=['#92c6ff','#b4a1ff','#ef9ed2','#ffa9a4','#f3cf89','#9ddbb2','#8ddde1'];
+ const jobs=new Set(),counts=new Set();let raf=0;
+ const rgb=c=>c.match(/[\d.]+/g)?.slice(0,3).map(Number)||[244,241,233];
+ const mix=(a,b,t)=>'rgb('+a.map((v,i)=>Math.round(v+(b[i]-v)*t)).join(',')+')';
+ const colours=palette.map(c=>[parseInt(c.slice(1,3),16),parseInt(c.slice(3,5),16),parseInt(c.slice(5,7),16)]);
+ const clamp=v=>Math.max(0,Math.min(1,v));
+ const smooth=v=>{v=clamp(v);return v*v*(3-2*v)};
+ function finish(job){
+  if(!jobs.has(job))return;
+  clearTimeout(job.timer);observer.unobserve(job.el);counts.delete(job);
+  if(job.kind==='count')job.el.replaceWith(document.createTextNode(job.text));
+  else if(job.kind==='centre'){
+   job.el.classList.remove('hero-centre-waiting','hero-centre-running');
+   job.el.style.removeProperty('--hero-reveal-mask');job.el.style.removeProperty('--hero-reveal-opacity');
+  }
+  else{
+   job.el.classList.remove('prism-pending','prism-running');
+   // Unwrap only our own spans: retain the headline's original em/strong markup.
+   for(const span of Array.from(job.el.querySelectorAll('.prism-char,.prism-word')).reverse())span.replaceWith(...span.childNodes);
+   job.el.normalize();
+  }
+  jobs.delete(job);
+  if(job.afterFinish)job.afterFinish();
+ }
+ function settleAll(){
+  window.portfolioHeroIntro?.reveal();
+  for(const job of Array.from(jobs))finish(job);
+  cancelAnimationFrame(raf);raf=0;
+ }
+ function write(root,{pace=22,delay=0,maxSpan=950,inkDuration=1050}={}){
+  if(!root||root.dataset.prismPrepared)return;
+  root.dataset.prismPrepared='true';
+  root.style.setProperty('--prism-ink-duration',inkDuration+'ms');
+  const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{acceptNode:n=>n.nodeValue.trim()?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_REJECT});
+  const nodes=[];while(walker.nextNode())nodes.push(walker.currentNode);
+  const length=nodes.reduce((n,node)=>n+Array.from(node.nodeValue).length,0);
+  pace=Math.min(pace,maxSpan/Math.max(1,length-1));let index=0;
+  for(const node of nodes){
+   const final=getComputedStyle(node.parentElement).color,fragment=document.createDocumentFragment();
+   for(const token of node.nodeValue.split(/(\s+)/u)){
+    if(!token)continue;
+    if(/^\s+$/u.test(token)){fragment.appendChild(document.createTextNode(token));index+=Array.from(token).length;continue;}
+    const word=document.createElement('span');word.className='prism-word';
+    for(const character of Array.from(token)){
+     const span=document.createElement('span');span.className='prism-char';span.textContent=character;
+     span.style.setProperty('--prism-colour',palette[index%palette.length]);
+     span.style.setProperty('--prism-final',final);
+     span.style.setProperty('--prism-delay',(delay+index*pace).toFixed(1)+'ms');
+     word.appendChild(span);index++;
+    }
+    fragment.appendChild(word);
+   }
+   node.replaceWith(fragment);
+  }
+  if(!index)return;
+  const job={kind:'write',el:root,duration:delay+Math.max(0,index-1)*pace+inkDuration,started:false};
+  root.classList.add('prism-pending');jobs.add(job);observer.observe(root);return job;
+ }
+ function count(root,stagger){
+  const text=root.textContent;
+  // A ratio or interval is written intact, keeping its meaning throughout the reveal.
+  if(/\d\s*[–—:\-]\s*\d/.test(text)){write(root,{pace:65,delay:stagger,maxSpan:430});return;}
+  const match=text.match(/\d[\d,]*(?:\.\d+)?/);if(!match){write(root);return;}
+  const numeric=match[0],target=Number(numeric.replace(/,/g,''));
+  const decimals=(numeric.split('.')[1]||'').length;
+  const wrapper=document.createElement('span');wrapper.className='prism-number prism-count-pending';
+  const reserve=document.createElement('span');reserve.className='prism-reserve';reserve.textContent=text;reserve.setAttribute('aria-hidden','true');
+  const live=document.createElement('span');live.className='prism-live';live.setAttribute('aria-hidden','true');live.textContent=text;
+  const accessible=document.createElement('span');accessible.className='prism-accessible';accessible.textContent=text;
+  wrapper.append(reserve,live,accessible);root.replaceChildren(wrapper);
+  const final=getComputedStyle(root).color;
+  const job={kind:'count',el:wrapper,text,target,decimals,numeric,offset:match.index,live,final:rgb(final),stagger,duration:1700,started:false};
+  jobs.add(job);observer.observe(wrapper);
+ }
+ function startCentre(job){
+  if(!jobs.has(job)||job.started||!job.ready||!job.inView)return;
+  if(disabled()){finish(job);return;}
+  job.started=true;job.start=performance.now();
+  job.el.style.setProperty('--hero-reveal-opacity','0');
+  job.el.style.setProperty('--hero-reveal-mask','radial-gradient(ellipse farthest-corner at 50% 50%,#000 0%,transparent 0%)');
+  job.el.classList.replace('hero-centre-waiting','hero-centre-running');
+  observer.unobserve(job.el);counts.add(job);if(!raf)raf=requestAnimationFrame(render);
+ }
+ function render(now){
+  raf=0;
+  if(disabled()){settleAll();return;}
+  for(const job of counts){
+   if(job.kind==='centre'){
+    const t=clamp((now-job.start)/1000);
+    if(t>=1){finish(job);continue;}
+    const spread=(1-Math.pow(1-t,2))*150;
+    job.el.style.setProperty('--hero-reveal-mask','radial-gradient(ellipse farthest-corner at 50% 50%,#000 '+Math.max(0,spread-38).toFixed(2)+'%,transparent '+spread.toFixed(2)+'%)');
+    job.el.style.setProperty('--hero-reveal-opacity',smooth(t/.22).toFixed(3));
+    continue;
+   }
+   const elapsed=now-job.start-job.stagger;if(elapsed<0)continue;
+   if(elapsed>=job.duration){finish(job);continue;}
+   const t=clamp(elapsed/1200),eased=1-Math.pow(1-t,3);
+   const value=job.target*eased;
+   let digits=job.decimals?value.toFixed(job.decimals):String(Math.floor(value));
+   if(t>=1)digits=job.numeric;
+   else if(job.numeric.includes(','))digits=Number(digits).toLocaleString('en-US',{minimumFractionDigits:job.decimals,maximumFractionDigits:job.decimals});
+   const text=job.text.slice(0,job.offset)+digits+job.text.slice(job.offset+job.numeric.length);
+   const chars=Array.from(text);
+   while(job.live.children.length<chars.length){const span=document.createElement('span');span.className='prism-count-char';job.live.appendChild(span);}
+   // The initial text is replaced only in the decorative, aria-hidden layer.
+   for(const node of Array.from(job.live.childNodes))if(node.nodeType===Node.TEXT_NODE)node.remove();
+   while(job.live.children.length>chars.length)job.live.lastElementChild.remove();
+   Array.from(job.live.children).forEach((span,i)=>{
+    span.textContent=chars[i];
+    const fade=smooth((elapsed-480-i*24)/850);
+    span.style.color=mix(colours[i%colours.length],job.final,fade);
+    span.style.opacity=String(smooth((elapsed-i*24)/150));
+   });
+   job.el.classList.add('prism-count-live');
+  }
+  if(counts.size)raf=requestAnimationFrame(render);
+ }
+ function startWrite(job){
+  if(!jobs.has(job)||job.started)return;
+  if(disabled()){finish(job);return;}
+  job.started=true;observer.unobserve(job.el);
+  job.el.classList.remove('prism-pending');job.el.classList.add('prism-running');
+  job.timer=setTimeout(()=>finish(job),job.duration);
+ }
+ const observer=new IntersectionObserver(entries=>{
+  for(const entry of entries){
+   if(!entry.isIntersecting)continue;
+   const job=Array.from(jobs).find(j=>j.el===entry.target);if(!job||job.started)continue;
+   if(job.kind==='centre'){job.inView=true;startCentre(job);continue;}
+   if(job.kind==='write'){job.inView=true;if(!job.held)startWrite(job);continue;}
+   job.started=true;observer.unobserve(job.el);
+   if(disabled()){finish(job);continue;}
+   if(job.kind==='count'){job.start=performance.now()+120;counts.add(job);if(!raf)raf=requestAnimationFrame(render);}
+  }
+ },{threshold:.25,rootMargin:'0px 0px -5% 0px'});
+ // The paragraph opens softly from its centre once the headline has fully resolved.
+ const headline=write(document.querySelector('.hero-title'),{pace:62,delay:30,maxSpan:2100,inkDuration:900});
+ if(headline)headline.held=document.documentElement.hasAttribute('data-hero-intro');
+ const description=document.querySelector('.hero-description');
+ if(description){
+  const paragraph={kind:'centre',el:description,ready:!headline,inView:false,started:false};
+  description.classList.add('hero-centre-waiting');jobs.add(paragraph);observer.observe(description);
+  if(headline)headline.afterFinish=()=>{paragraph.ready=true;startCentre(paragraph);};
+ }
+ // Hold the complete hero copy until the last name letter has arrived.
+ if(headline?.held){
+  const root=document.documentElement;
+  const beginText=()=>{
+   window.portfolioHeroIntro?.reveal();
+   headline.held=false;
+   if(headline.inView)startWrite(headline);
+  };
+  root.setAttribute('data-hero-intro','name');
+  const arrivals=Array.from(document.querySelectorAll('.hero-name .letter-face')).flatMap(face=>
+   typeof face.getAnimations==='function'?face.getAnimations().filter(animation=>animation.animationName==='name-arrive'):[]);
+  if(arrivals.length){Promise.all(arrivals.map(animation=>animation.finished.catch(()=>{}))).then(beginText);}
+  else beginText();
+ }
+ function prepareMetrics(){
+ document.querySelectorAll('#experience .metric-value,#projects .project-result .value').forEach((el,i)=>count(el,(i%3)*90));
+ const roots=document.querySelectorAll('#experience .experience-summary,#experience .technical-list li,#projects .project-headline,#projects .project-description,#projects .technical-list li,#projects .project-meta dd,#projects .project-result .label,#projects .archive-item p');
+ // Capture quantities with their signs, ranges and units; do not split model IDs or 3D/2D labels.
+ const quantity=/(?<![\p{L}\p{N}_-])(?:[<>≤≥≈±]\s*)?\d[\d,]*(?:\.\d+)?(?:\s*[–—−-]\s*\d[\d,]*(?:\.\d+)?)?(?::\d+(?:\.\d+)?)?(?:[%°+]|×(?:FoS)?)?(?:\s?(?:kg|mm|cm|m\/s|ft|seconds?|s)\b)?(?![\p{L}\p{N}_-])/gu;
+ for(const root of roots){
+  const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT),nodes=[];while(walker.nextNode())nodes.push(walker.currentNode);
+  let local=0;
+  for(const node of nodes){
+   if(node.parentElement.closest('.prism-number,[data-prism-prepared],a,button,script,style'))continue;
+   const text=node.nodeValue,matches=Array.from(text.matchAll(quantity));if(!matches.length)continue;
+   const fragment=document.createDocumentFragment();let cursor=0;const spans=[];
+   for(const match of matches){
+    fragment.appendChild(document.createTextNode(text.slice(cursor,match.index)));
+    const span=document.createElement('span');span.className='prism-quantity';span.textContent=match[0];fragment.appendChild(span);spans.push(span);cursor=match.index+match[0].length;
+   }
+   fragment.appendChild(document.createTextNode(text.slice(cursor)));node.replaceWith(fragment);
+   for(const span of spans)write(span,{pace:48,delay:(local++%4)*70,maxSpan:350});
+  }
+ }
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',prepareMetrics,{once:true});else prepareMetrics();
+ reduce.addEventListener('change',()=>{if(disabled())settleAll();});contrast.addEventListener('change',()=>{if(disabled())settleAll();});
+ new MutationObserver(()=>{if(disabled())settleAll();}).observe(document.body,{attributes:true,attributeFilter:['class']});
+ document.addEventListener('visibilitychange',()=>{if(document.hidden){for(const job of Array.from(jobs))if(job.started)finish(job);}});
+ // Never leave text hidden if its section is reached by find, print or a paused animation.
+ window.addEventListener('beforeprint',settleAll);
+})();
+
+</script>
     <section id="about" class="section" aria-labelledby="about-title">
       <div class="shell">
         <div class="section-head reveal"><div><div class="section-tag"><span class="number">01</span><span class="sep">·</span><span>About</span></div><h2 class="section-title" id="about-title">CAD, analysis,<br><em>and the workshop.</em></h2></div><p class="section-intro">I like seeing what happens between a clean CAD model and the first physical test.</p></div>
@@ -5359,176 +5577,7 @@ function initCADViewers(options) {
 })();
 
 </script>
-<script id="prism-text-script">
-/* Once-per-visit spectrum reveals. Every final value remains intact and accessible. */
-(()=>{
- 'use strict';
- const reduce=matchMedia('(prefers-reduced-motion: reduce)'),contrast=matchMedia('(forced-colors: active)');
- const disabled=()=>reduce.matches||contrast.matches||document.body.classList.contains('motion-paused');
- if(disabled()||!('IntersectionObserver' in window))return;
- const palette=['#92c6ff','#b4a1ff','#ef9ed2','#ffa9a4','#f3cf89','#9ddbb2','#8ddde1'];
- const jobs=new Set(),counts=new Set();let raf=0;
- const rgb=c=>c.match(/[\d.]+/g)?.slice(0,3).map(Number)||[244,241,233];
- const mix=(a,b,t)=>'rgb('+a.map((v,i)=>Math.round(v+(b[i]-v)*t)).join(',')+')';
- const colours=palette.map(c=>[parseInt(c.slice(1,3),16),parseInt(c.slice(3,5),16),parseInt(c.slice(5,7),16)]);
- const clamp=v=>Math.max(0,Math.min(1,v));
- const smooth=v=>{v=clamp(v);return v*v*(3-2*v)};
- function finish(job){
-  if(!jobs.has(job))return;
-  clearTimeout(job.timer);observer.unobserve(job.el);counts.delete(job);
-  if(job.kind==='count')job.el.replaceWith(document.createTextNode(job.text));
-  else if(job.kind==='centre'){
-   job.el.classList.remove('hero-centre-waiting','hero-centre-running');
-   job.el.style.removeProperty('--hero-reveal-mask');job.el.style.removeProperty('--hero-reveal-opacity');
-  }
-  else{
-   job.el.classList.remove('prism-pending','prism-running');
-   // Unwrap only our own spans: retain the headline's original em/strong markup.
-   for(const span of Array.from(job.el.querySelectorAll('.prism-char,.prism-word')).reverse())span.replaceWith(...span.childNodes);
-   job.el.normalize();
-  }
-  jobs.delete(job);
-  if(job.afterFinish)job.afterFinish();
- }
- function settleAll(){
-  for(const job of Array.from(jobs))finish(job);
-  cancelAnimationFrame(raf);raf=0;
- }
- function write(root,{pace=22,delay=0,maxSpan=950,inkDuration=1050}={}){
-  if(!root||root.dataset.prismPrepared)return;
-  root.dataset.prismPrepared='true';
-  root.style.setProperty('--prism-ink-duration',inkDuration+'ms');
-  const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{acceptNode:n=>n.nodeValue.trim()?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_REJECT});
-  const nodes=[];while(walker.nextNode())nodes.push(walker.currentNode);
-  const length=nodes.reduce((n,node)=>n+Array.from(node.nodeValue).length,0);
-  pace=Math.min(pace,maxSpan/Math.max(1,length-1));let index=0;
-  for(const node of nodes){
-   const final=getComputedStyle(node.parentElement).color,fragment=document.createDocumentFragment();
-   for(const token of node.nodeValue.split(/(\s+)/u)){
-    if(!token)continue;
-    if(/^\s+$/u.test(token)){fragment.appendChild(document.createTextNode(token));index+=Array.from(token).length;continue;}
-    const word=document.createElement('span');word.className='prism-word';
-    for(const character of Array.from(token)){
-     const span=document.createElement('span');span.className='prism-char';span.textContent=character;
-     span.style.setProperty('--prism-colour',palette[index%palette.length]);
-     span.style.setProperty('--prism-final',final);
-     span.style.setProperty('--prism-delay',(delay+index*pace).toFixed(1)+'ms');
-     word.appendChild(span);index++;
-    }
-    fragment.appendChild(word);
-   }
-   node.replaceWith(fragment);
-  }
-  if(!index)return;
-  const job={kind:'write',el:root,duration:delay+Math.max(0,index-1)*pace+inkDuration,started:false};
-  root.classList.add('prism-pending');jobs.add(job);observer.observe(root);return job;
- }
- function count(root,stagger){
-  const text=root.textContent;
-  // A ratio or interval is written intact, keeping its meaning throughout the reveal.
-  if(/\d\s*[–—:\-]\s*\d/.test(text)){write(root,{pace:65,delay:stagger,maxSpan:430});return;}
-  const match=text.match(/\d[\d,]*(?:\.\d+)?/);if(!match){write(root);return;}
-  const numeric=match[0],target=Number(numeric.replace(/,/g,''));
-  const decimals=(numeric.split('.')[1]||'').length;
-  const wrapper=document.createElement('span');wrapper.className='prism-number prism-count-pending';
-  const reserve=document.createElement('span');reserve.className='prism-reserve';reserve.textContent=text;reserve.setAttribute('aria-hidden','true');
-  const live=document.createElement('span');live.className='prism-live';live.setAttribute('aria-hidden','true');live.textContent=text;
-  const accessible=document.createElement('span');accessible.className='prism-accessible';accessible.textContent=text;
-  wrapper.append(reserve,live,accessible);root.replaceChildren(wrapper);
-  const final=getComputedStyle(root).color;
-  const job={kind:'count',el:wrapper,text,target,decimals,numeric,offset:match.index,live,final:rgb(final),stagger,duration:1700,started:false};
-  jobs.add(job);observer.observe(wrapper);
- }
- function startCentre(job){
-  if(!jobs.has(job)||job.started||!job.ready||!job.inView)return;
-  if(disabled()){finish(job);return;}
-  job.started=true;job.start=performance.now();
-  job.el.style.setProperty('--hero-reveal-opacity','0');
-  job.el.style.setProperty('--hero-reveal-mask','radial-gradient(ellipse farthest-corner at 50% 50%,#000 0%,transparent 0%)');
-  job.el.classList.replace('hero-centre-waiting','hero-centre-running');
-  observer.unobserve(job.el);counts.add(job);if(!raf)raf=requestAnimationFrame(render);
- }
- function render(now){
-  raf=0;
-  if(disabled()){settleAll();return;}
-  for(const job of counts){
-   if(job.kind==='centre'){
-    const t=clamp((now-job.start)/1000);
-    if(t>=1){finish(job);continue;}
-    const spread=(1-Math.pow(1-t,2))*150;
-    job.el.style.setProperty('--hero-reveal-mask','radial-gradient(ellipse farthest-corner at 50% 50%,#000 '+Math.max(0,spread-38).toFixed(2)+'%,transparent '+spread.toFixed(2)+'%)');
-    job.el.style.setProperty('--hero-reveal-opacity',smooth(t/.22).toFixed(3));
-    continue;
-   }
-   const elapsed=now-job.start-job.stagger;if(elapsed<0)continue;
-   if(elapsed>=job.duration){finish(job);continue;}
-   const t=clamp(elapsed/1200),eased=1-Math.pow(1-t,3);
-   const value=job.target*eased;
-   let digits=job.decimals?value.toFixed(job.decimals):String(Math.floor(value));
-   if(t>=1)digits=job.numeric;
-   else if(job.numeric.includes(','))digits=Number(digits).toLocaleString('en-US',{minimumFractionDigits:job.decimals,maximumFractionDigits:job.decimals});
-   const text=job.text.slice(0,job.offset)+digits+job.text.slice(job.offset+job.numeric.length);
-   const chars=Array.from(text);
-   while(job.live.children.length<chars.length){const span=document.createElement('span');span.className='prism-count-char';job.live.appendChild(span);}
-   // The initial text is replaced only in the decorative, aria-hidden layer.
-   for(const node of Array.from(job.live.childNodes))if(node.nodeType===Node.TEXT_NODE)node.remove();
-   while(job.live.children.length>chars.length)job.live.lastElementChild.remove();
-   Array.from(job.live.children).forEach((span,i)=>{
-    span.textContent=chars[i];
-    const fade=smooth((elapsed-480-i*24)/850);
-    span.style.color=mix(colours[i%colours.length],job.final,fade);
-    span.style.opacity=String(smooth((elapsed-i*24)/150));
-   });
-   job.el.classList.add('prism-count-live');
-  }
-  if(counts.size)raf=requestAnimationFrame(render);
- }
- const observer=new IntersectionObserver(entries=>{
-  for(const entry of entries){
-   if(!entry.isIntersecting)continue;
-   const job=Array.from(jobs).find(j=>j.el===entry.target);if(!job||job.started)continue;
-   if(job.kind==='centre'){job.inView=true;startCentre(job);continue;}
-   job.started=true;observer.unobserve(job.el);
-   if(disabled()){finish(job);continue;}
-   if(job.kind==='count'){job.start=performance.now()+120;counts.add(job);if(!raf)raf=requestAnimationFrame(render);}
-   else{job.el.classList.remove('prism-pending');job.el.classList.add('prism-running');job.timer=setTimeout(()=>finish(job),job.duration);}
-  }
- },{threshold:.25,rootMargin:'0px 0px -5% 0px'});
- // The paragraph opens softly from its centre once the headline has fully resolved.
- const headline=write(document.querySelector('.hero-title'),{pace:62,delay:30,maxSpan:2100,inkDuration:900});
- const description=document.querySelector('.hero-description');
- if(description){
-  const paragraph={kind:'centre',el:description,ready:!headline,inView:false,started:false};
-  description.classList.add('hero-centre-waiting');jobs.add(paragraph);observer.observe(description);
-  if(headline)headline.afterFinish=()=>{paragraph.ready=true;startCentre(paragraph);};
- }
- document.querySelectorAll('#experience .metric-value,#projects .project-result .value').forEach((el,i)=>count(el,(i%3)*90));
- const roots=document.querySelectorAll('#experience .experience-summary,#experience .technical-list li,#projects .project-headline,#projects .project-description,#projects .technical-list li,#projects .project-meta dd,#projects .project-result .label,#projects .archive-item p');
- // Capture quantities with their signs, ranges and units; do not split model IDs or 3D/2D labels.
- const quantity=/(?<![\p{L}\p{N}_-])(?:[<>≤≥≈±]\s*)?\d[\d,]*(?:\.\d+)?(?:\s*[–—−-]\s*\d[\d,]*(?:\.\d+)?)?(?::\d+(?:\.\d+)?)?(?:[%°+]|×(?:FoS)?)?(?:\s?(?:kg|mm|cm|m\/s|ft|seconds?|s)\b)?(?![\p{L}\p{N}_-])/gu;
- for(const root of roots){
-  const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT),nodes=[];while(walker.nextNode())nodes.push(walker.currentNode);
-  let local=0;
-  for(const node of nodes){
-   if(node.parentElement.closest('.prism-number,[data-prism-prepared],a,button,script,style'))continue;
-   const text=node.nodeValue,matches=Array.from(text.matchAll(quantity));if(!matches.length)continue;
-   const fragment=document.createDocumentFragment();let cursor=0;const spans=[];
-   for(const match of matches){
-    fragment.appendChild(document.createTextNode(text.slice(cursor,match.index)));
-    const span=document.createElement('span');span.className='prism-quantity';span.textContent=match[0];fragment.appendChild(span);spans.push(span);cursor=match.index+match[0].length;
-   }
-   fragment.appendChild(document.createTextNode(text.slice(cursor)));node.replaceWith(fragment);
-   for(const span of spans)write(span,{pace:48,delay:(local++%4)*70,maxSpan:350});
-  }
- }
- reduce.addEventListener('change',()=>{if(disabled())settleAll();});contrast.addEventListener('change',()=>{if(disabled())settleAll();});
- new MutationObserver(()=>{if(disabled())settleAll();}).observe(document.body,{attributes:true,attributeFilter:['class']});
- document.addEventListener('visibilitychange',()=>{if(document.hidden){for(const job of Array.from(jobs))if(job.started)finish(job);}});
- // Never leave text hidden if its section is reached by find, print or a paused animation.
- window.addEventListener('beforeprint',settleAll);
-})();
 
-</script>
 
 <script id="experience-scene-script">
 (()=>{
