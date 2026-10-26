@@ -2417,9 +2417,11 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
   const envelope = (a,b,c,d,p) => smooth(a,b,p)*(1-smooth(c,d,p));
   const disabled = () => reduce.matches || document.body.classList.contains('motion-paused');
   let renderer, scene, camera, rocket, wing, drivetrain, environment;
+  let rocketTarget,rocketComposite,rocketCompositeCamera,rocketCompositeMaterial;
   let frame=0, progress=0, clock=0, last=0, visible=true, failed=false;
   let width=1, height=1, worldWidth=12, worldHeight=8, compact=false;
   let gearWheels=[], flowMaterials=[], exhaustMaterials=[];
+  const rocketAxis=new T.Vector3(0,1,0),flightDirection=new T.Vector3(),flightBank=new T.Quaternion();
   const palette = { silver:0xc8d3de, blue:0x547e9d, dark:0x152836, copper:0xb98b62, pale:0xe5e9e8 };
 
   function material(color,metalness=.75,roughness=.28,extra={}) {
@@ -2507,6 +2509,29 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
       mesh(new T.CylinderGeometry(r,.003,len,32,12,true),mat,group,0,-2.01-len/2,0);
     }
     return seal(group);
+  }
+
+  function buildRocketComposite() {
+    // Fade the resolved image of the opaque model, keeping all its surface occlusion intact.
+    const hdr=renderer.capabilities.isWebGL2&&renderer.extensions.has('EXT_color_buffer_float');
+    rocketTarget=new T.WebGLRenderTarget(1,1,{type:hdr?T.HalfFloatType:T.UnsignedByteType,depthBuffer:true,stencilBuffer:false,samples:renderer.capabilities.isWebGL2?4:0});
+    rocketTarget.texture.colorSpace=T.LinearSRGBColorSpace;
+    rocketCompositeMaterial=new T.ShaderMaterial({
+      uniforms:{uImage:{value:rocketTarget.texture},uOpacity:{value:0}},
+      transparent:true,depthTest:false,depthWrite:false,toneMapped:true,
+      vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=vec4(position.xy,0.,1.);}',
+      fragmentShader:`varying vec2 vUv;
+        uniform sampler2D uImage;uniform float uOpacity;
+        void main(){
+          vec4 pixel=texture2D(uImage,vUv);
+          vec3 color=pixel.a>.00001?pixel.rgb/pixel.a:vec3(0.);
+          gl_FragColor=vec4(color,pixel.a*uOpacity);
+          #include <tonemapping_fragment>
+          #include <colorspace_fragment>
+        }`
+    });
+    rocketComposite=new T.Scene();rocketCompositeCamera=new T.OrthographicCamera(-1,1,1,-1,0,2);
+    const surface=new T.Mesh(new T.PlaneGeometry(2,2),rocketCompositeMaterial);surface.frustumCulled=false;rocketComposite.add(surface);
   }
 
   function foilPoint(x,upper) {
@@ -2623,16 +2648,30 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     const box=host.getBoundingClientRect();width=Math.max(1,box.width);height=Math.max(1,box.height);compact=width<=700;
     renderer.setPixelRatio(Math.min(devicePixelRatio||1,compact?1.6:1.75));
     renderer.setSize(width,height,false);camera.aspect=width/height;camera.updateProjectionMatrix();
+    if(rocketTarget){const size=renderer.getDrawingBufferSize(new T.Vector2());rocketTarget.setSize(size.x,size.y);}
     worldHeight=2*Math.tan(T.MathUtils.degToRad(camera.fov/2))*camera.position.z;
     worldWidth=worldHeight*camera.aspect;schedule();
   }
   function pose(p) {
     const flight=clamp((p-.105)/.295);
-    const flightEase=flight*flight*(3-2*flight);
-    const mobileScale=Math.min(1,worldWidth/7.5);
-    rocket.position.set(mix(-worldWidth*.5-3.2,worldWidth*.5+3.2,flightEase),mix(-worldHeight*.22,worldHeight*.27,flightEase)+.55,0);
-    rocket.rotation.set(.18,mix(-.32,.65,flight),mix(-1.16,-.94,flight));rocket.scale.setScalar(compact?Math.max(.5,mobileScale):1.08);
-    fade(rocket,envelope(.11,.155,.35,.4,p));
+    const u=flight*flight*(3-2*flight),sweep=Math.PI*2*u;
+    const arcHeight=Math.min(worldHeight,worldWidth*1.1);
+    // A non-planar fly-by: emerge behind the page, pass near the camera, then bank away.
+    // Physical depth supplies the size change and foreshortening; scale stays constant.
+    rocket.position.set(
+      worldWidth*(-.36+.72*u),
+      .55+arcHeight*(-.12+.34*u+.13*Math.sin(sweep)),
+      -7+10.6*Math.pow(Math.sin(Math.PI*u),2)
+    );
+    // Follow the path's analytical tangent, with a restrained roll around the body axis.
+    flightDirection.set(worldWidth*.72,arcHeight*(.34+.26*Math.PI*Math.cos(sweep)),10.6*Math.PI*Math.sin(sweep)).normalize();
+    rocket.quaternion.setFromUnitVectors(rocketAxis,flightDirection);
+    flightBank.setFromAxisAngle(rocketAxis,mix(-.28,.48,u)+.48*Math.sin(sweep));
+    rocket.quaternion.multiply(flightBank);
+    rocket.scale.setScalar(Math.min(1.06,worldWidth/9.8));
+    const rocketFade=envelope(.12,.18,.325,.395,p);
+    rocket.userData.flightOpacity=rocketFade;
+    rocket.visible=rocketFade>.002;
     const foilTurn=smooth(.37,.63,p);
     wing.scale.setScalar(compact?Math.min(.76,worldWidth/6.5):1.06);
     wing.position.set(mix(.3,-.25,foilTurn),compact?.45:.55,0);
@@ -2659,7 +2698,17 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     last=time;
     flowMaterials.forEach(m=>m.uniforms.uTime.value=clock);
     exhaustMaterials.forEach(m=>m.uniforms.uTime.value=clock);
-    pose(progress);renderer.render(scene,camera);
+    pose(progress);
+    if(rocket.visible){
+      const wingVisible=wing.visible,gearsVisible=drivetrain.visible;
+      wing.visible=false;drivetrain.visible=false;
+      renderer.setRenderTarget(rocketTarget);renderer.render(scene,camera);
+      wing.visible=wingVisible;drivetrain.visible=gearsVisible;rocket.visible=false;
+      renderer.setRenderTarget(null);renderer.render(scene,camera);
+      rocketCompositeMaterial.uniforms.uOpacity.value=rocket.userData.flightOpacity;
+      renderer.autoClear=false;renderer.render(rocketComposite,rocketCompositeCamera);renderer.autoClear=true;
+      rocket.visible=true;
+    }else renderer.render(scene,camera);
     if(animate)frame=requestAnimationFrame(render);
   }
   function schedule(){if(renderer&&!frame&&visible&&!document.hidden&&!failed)frame=requestAnimationFrame(render);}
@@ -2681,9 +2730,12 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
       const rim=new T.DirectionalLight(0xddaa80,2.2);rim.position.set(-4,-2,-2);scene.add(rim);
       studioEnvironment();
       rocket=buildRocket();wing=buildWing();drivetrain=buildGears();scene.add(rocket,wing,drivetrain);
+      buildRocketComposite();
       host.addEventListener('webglcontextlost',event=>{event.preventDefault();fallback();},true);
       document.documentElement.classList.add('engineering-enhanced');
       renderer.compile(scene,camera);
+      renderer.setRenderTarget(rocketTarget);renderer.compile(scene,camera);renderer.setRenderTarget(null);
+      renderer.compile(rocketComposite,rocketCompositeCamera);
       resize();new ResizeObserver(resize).observe(host);
       new IntersectionObserver(entries=>{visible=entries[0].isIntersecting&&entries[0].intersectionRatio>.05;if(visible)schedule();else stop();},{threshold:[0,.05],rootMargin:'-'+(document.getElementById('site-header')?.offsetHeight||76)+'px 0px 0px 0px'}).observe(host);
       dispatchEvent(new Event('resize'));
@@ -2691,7 +2743,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
   }
   window.zhEngineeringScene={
     setProgress(value){progress=clamp(value);if(!renderer&&!failed)init();schedule();},
-    getState(){return {ready:!!renderer&&!failed,progress,stage:host.dataset.stage,width,height,rendering:!!frame,tilt:drivetrain?.userData.assembly.rotation.x};}
+    getState(){return {ready:!!renderer&&!failed,progress,stage:host.dataset.stage,width,height,rendering:!!frame,tilt:drivetrain?.userData.assembly.rotation.x,rocket:rocket?{position:rocket.position.toArray(),heading:flightDirection.toArray(),rotation:rocket.quaternion.toArray(),scale:rocket.scale.x,opacity:rocket.userData.flightOpacity}:null};}
   };
   addEventListener('portfolio:motion',()=>{if(disabled()){progress=0;stop();host.style.opacity='0';captions.forEach(x=>x.style.opacity='0');}else {init();resize();schedule();}});
   reduce.addEventListener?.('change',()=>{if(reduce.matches)stop();else init();});
